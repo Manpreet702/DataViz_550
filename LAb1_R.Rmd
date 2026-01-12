@@ -1,0 +1,235 @@
+---
+title: "GGLab1"
+author: "Manpreet Singh"
+date: "2026-01-12"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r q1}
+library(readr)
+library(dplyr)
+library(ggplot2)
+
+# Read the data
+gap_df <- read_csv("https://raw.githubusercontent.com/UofTCoders/workshops-dc-py/master/data/processed/world-data-gapminder.csv"
+)
+head(gap_df, 5)
+# Filter for year 1862
+gap_df <- gap_df %>%
+  filter(year =="1862")
+
+# View first 5 rows
+head(gap_df, 5)
+
+# Create the scatter plot
+ggplot(gap_df, aes(x = children_per_woman, y = life_expectancy)) +
+  geom_point()
+
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r q2, echo=FALSE}
+library(tidyverse)
+
+# Read the data (year parsed as Date automatically)
+gap1_df <- read_csv(
+  "https://raw.githubusercontent.com/UofTCoders/workshops-dc-py/master/data/processed/world-data-gapminder.csv"
+)
+
+# Keep only years 1970 and 2015
+gap1_df <- gap1_df %>%
+  filter(year %in% c("1970", "2015"))
+
+# Create ratio of years in school (women / men)
+gap1_df <- gap1_df %>%
+  mutate(
+    years_in_school_ratio = years_in_school_women / years_in_school_men
+  )
+
+# Check first rows
+head(gap1_df)
+
+# Compute mean ratio by year and income group
+ratio_by_income <- gap1_df %>%
+  group_by(year, income_group) %>%
+  summarise(
+    mean_school_ratio = mean(years_in_school_ratio, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+# Line plot with square points
+ggplot(ratio_by_income,
+       aes(x = year,
+           y = mean_school_ratio,
+           group = income_group,
+           color = income_group)) +
+  geom_line() +
+  geom_point(shape = 15, size = 3) +
+  labs(
+    x = "Year",
+    y = "Mean Years in School Ratio (Women / Men)",
+    color = "Income Group"
+  ) +
+  theme_minimal()
+
+```
+
+```{r q3, echo=FALSE}
+library(tidyverse)
+
+gap_df <- read_csv(
+  "https://raw.githubusercontent.com/UofTCoders/workshops-dc-py/master/data/processed/world-data-gapminder.csv"
+)
+
+# Filter using numeric years
+gap_df <- gap_df %>%
+  filter(year %in% c(1918, 1936, 1958, 1978, 1998, 2018))
+
+# Scatter plot with facets
+ggplot(gap_df,
+       aes(x = children_per_woman,
+           y = child_mortality,
+           color = income_group)) +
+  geom_point(alpha = 0.7) +
+  facet_wrap(~ year, ncol = 3) +
+  labs(
+    x = "Children per Woman",
+    y = "Child Mortality",
+    color = "Income Group"
+  )
+
+```
+
+```{r q4, echo=FALSE}
+library(tidyverse)
+
+# Read the data
+gap_df <- read_csv(
+  "https://raw.githubusercontent.com/UofTCoders/workshops-dc-py/master/data/processed/world-data-gapminder.csv"
+)
+
+latest_year <- gap_df %>%
+  filter(!is.na(co2_per_capita)) %>%
+  summarise(latest_year = max(year)) %>%
+  pull(latest_year)
+
+# Filter data for the latest year
+latest_df <- gap_df %>%
+  filter(year == latest_year)
+
+# Select top 40 countries by CO2 per capita
+top40 <- latest_df %>%
+  slice_max(order_by = co2_per_capita, n = 40)
+
+# Bar chart
+ggplot(top40,
+       aes(x = co2_per_capita,
+           y = reorder(country, co2_per_capita),
+           fill = region)) +
+  geom_col() +
+  labs(
+    x = "CO₂ per Capita",
+    y = "Country",
+    fill = "Region"
+  )
+
+```
+
+```{r q5, echo=FALSE}
+library(tidyverse)
+
+# Read data
+gap_df <- read_csv(
+  "https://raw.githubusercontent.com/UofTCoders/workshops-dc-py/master/data/processed/world-data-gapminder.csv"
+)
+
+# Create total CO2 column
+gap_df <- gap_df %>%
+  mutate(co2_total = co2_per_capita * population)
+
+# Aggregate total CO2 by year and region
+co2_region_year <- gap_df %>%
+  filter(!is.na(co2_total)) %>%
+  group_by(year, region) %>%
+  summarise(
+    co2_total = sum(co2_total),
+    .groups = "drop"
+  )
+
+# Area chart
+ggplot(co2_region_year,
+       aes(x = year,
+           y = co2_total,
+           fill = region)) +
+  geom_area() +
+  labs(
+    x = "Year",
+    y = "Total CO₂ Emissions",
+    fill = "Region",
+    title = "Total CO₂ Emissions by Region Over Time"
+  ) +
+  theme_minimal()
+
+
+```
+
+```{r q6, echo=FALSE}
+library(tidyverse)
+
+# Read data
+gap_df <- read_csv(
+  "https://raw.githubusercontent.com/UofTCoders/workshops-dc-py/master/data/processed/world-data-gapminder.csv"
+)
+
+# Find the most recent year with non-missing CO2 per capita
+latest_year <- gap_df %>%
+  filter(!is.na(co2_per_capita)) %>%
+  summarise(latest_year = max(year)) %>%
+  pull(latest_year)
+
+# Filter data for latest year
+gap_latest <- gap_df %>%
+  filter(year == latest_year)
+
+# Bubble chart
+ggplot(
+  gap_latest,
+  aes(
+    x = co2_per_capita,
+    y = life_expectancy,
+    color = region,
+    size = population
+  )
+) +
+  geom_point(alpha = 0.7) +
+  scale_size(range = c(2, 15)) +
+  labs(
+    x = "CO₂ per Capita",
+    y = "Life Expectancy",
+    color = "Region",
+    size = "Population",
+    title = paste("CO₂ per Capita vs Life Expectancy (", latest_year, ")", sep = "")
+  ) +
+  theme_minimal()
+
+```
+
+```{}
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
